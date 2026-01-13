@@ -117,6 +117,105 @@ fraud_model.pkl
 
 
 
-Real-world performance may vary due to noisy data
+Another explanation or example of how to use the model 
+🔹 Frontend / Backend Integration Logic (Real Data Flow)
 
-Architecture matches real fraud detection pipelines
+The fraud detection model does not consume raw identifiers such as IP addresses or device names.
+Instead, the system follows a two‑layer approach:
+
+Rule / Risk Extraction Layer
+
+Machine Learning Classification Layer
+
+🔹 Step 1: Raw Transaction Data (Frontend → Backend)
+
+Frontend sends raw (simulated) transaction data:
+
+{
+  "user_id": "user_123",
+  "ip_address": "185.220.101.4",
+  "device_id": "android_emulator_x86",
+  "timestamp": "2026-01-13T02:30:00",
+  "amount": 8200
+}
+
+
+This data is not directly sent to the ML model.
+
+🔹 Step 2: Risk Feature Derivation (Backend Logic)
+
+Backend processes raw data using simple rule‑based logic:
+
+def preprocess_transaction(txn):
+    return {
+        "amount": txn["amount"],
+        "is_mal_ip": 1 if txn["ip_address"] in MALICIOUS_IP_LIST else 0,
+        "is_mal_device": 1 if txn["device_id"] in FLAGGED_DEVICES else 0,
+        "odd_time": 1 if txn["timestamp"].hour < 5 else 0,
+        "txn_count_24h": get_txn_count_last_24h(txn["user_id"])
+    }
+
+
+This step simulates:
+
+IP reputation systems
+
+Device trust history
+
+Time‑based anomaly detection
+
+Transaction velocity checks
+
+🔹 Step 3: Model‑Ready Input
+
+The derived features are passed to the ML model:
+
+{
+  "amount": 8200,
+  "is_mal_ip": 1,
+  "is_mal_device": 1,
+  "odd_time": 1,
+  "txn_count_24h": 7
+}
+
+
+This structure matches the model training schema exactly.
+
+🔹 Step 4: Fraud Prediction
+
+Backend calls the ML model:
+
+prediction = model.predict(features)
+
+
+Model output:
+
+1 → Fraud
+
+0 → Normal
+
+Mapped to user‑friendly response:
+
+{
+  "prediction": "Fraud"
+}
+
+🔹 Why This Design Is Correct
+
+Raw identifiers are high‑cardinality and unstable
+
+Risk features are stable, explainable, and scalable
+
+This architecture mirrors real financial fraud pipelines
+
+ML remains decoupled from business logic
+
+🔹 Important Notes for Team Usage
+
+Feature names and order must not change
+
+Backend owns data preprocessing
+
+ML model only performs classification
+
+Dataset is synthetic but logic is realistic
