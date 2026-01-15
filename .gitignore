@@ -1,0 +1,16 @@
+# Environment variables
+.env
+
+# Firebase service account keys
+*.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+
+# OS junk
+Thumbs.db
+.DS_Store

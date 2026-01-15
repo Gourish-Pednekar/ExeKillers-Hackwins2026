@@ -4,3 +4,7 @@ scikit-learn
 joblib
 fastapi
 uvicorn
+firebase-admin
+python-dotenv
+pydantic
+python-multipart

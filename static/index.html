@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Payment System</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Login/Register Screen -->
+        <div id="authScreen" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold text-center mb-6">Fraud Detection System</h1>
+            
+            <!-- Toggle Buttons -->
+            <div class="flex mb-6">
+                <button onclick="showLogin()" id="loginBtn" class="flex-1 py-2 px-4 bg-blue-500 text-white rounded-l-lg">Login</button>
+                <button onclick="showRegister()" id="registerBtn" class="flex-1 py-2 px-4 bg-gray-300 text-gray-700 rounded-r-lg">Register</button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="loginEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your email">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="loginPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your password">
+                </div>
+                <button onclick="login()" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Login</button>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="hidden">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="registerEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your email">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="registerPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your password">
+                </div>
+                <button onclick="register()" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Register</button>
+            </div>
+            
+            <div id="authMessage" class="mt-4 text-center text-sm"></div>
+        </div>
+        
+        <!-- Payment Screen -->
+        <div id="paymentScreen" class="hidden max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold text-center mb-6">Make Payment</h1>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Amount ($)</label>
+                <input type="number" id="amount" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter amount" value="100">
+            </div>
+            
+            <!-- Detected Information (Read-only) -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold mb-3">Detected Information</h3>
+                <div class="space-y-2 text-sm">
+                    <div><strong>IP Address:</strong> <span id="detectedIP">-</span></div>
+                    <div><strong>Device:</strong> <span id="detectedDevice">-</span></div>
+                    <div><strong>Time:</strong> <span id="detectedTime">-</span></div>
+                    <div><strong>Transaction Count (24h):</strong> <span id="txnCount">-</span></div>
+                </div>
+            </div>
+            
+            <button onclick="processPayment()" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Process Payment</button>
+            
+            <button onclick="showUserDetails()" class="w-full mt-3 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">View User Details</button>
+            
+            <button onclick="logout()" class="w-full mt-3 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600">Logout</button>
+            
+            <div id="paymentResult" class="mt-4"></div>
+        </div>
+        
+        <!-- User Data Verification Screen -->
+        <div id="verificationScreen" class="hidden max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold text-center mb-6">User Data Verification</h1>
+            <div id="userDataDisplay" class="bg-gray-50 rounded-lg p-4"></div>
+            <button onclick="backToPayment()" class="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Back to Payment</button>
+        </div>
+    </div>
+
+    <script>
+        // // Firebase configuration - REPLACE WITH YOUR CONFIG
+        // const firebaseConfig = {
+        //     apiKey: "your-api-key",
+        //     authDomain: "your-project.firebaseapp.com",
+        //     projectId: "your-project-id",
+        //     storageBucket: "your-project.appspot.com",
+        //     messagingSenderId: "your-sender-id",
+        //     appId: "your-app-id"
+        // };
+        // // Import the functions you need from the SDKs you need
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDEjKjG2iaQ-3gOK8cfMBOABS1rkIfb7A0",
+  authDomain: "fraud-detection-demo-1ccf1.firebaseapp.com",
+  projectId: "fraud-detection-demo-1ccf1",
+  storageBucket: "fraud-detection-demo-1ccf1.firebasestorage.app",
+  messagingSenderId: "870429881793",
+  appId: "1:870429881793:web:334f38330d83fbe3bd2b40"
+};
+
+
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        
+        let currentUser = null;
+        
+        // UI Functions
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginBtn').classList.add('bg-blue-500', 'text-white');
+            document.getElementById('loginBtn').classList.remove('bg-gray-300', 'text-gray-700');
+            document.getElementById('registerBtn').classList.remove('bg-green-500', 'text-white');
+            document.getElementById('registerBtn').classList.add('bg-gray-300', 'text-gray-700');
+        }
+        
+        function showRegister() {
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerBtn').classList.add('bg-green-500', 'text-white');
+            document.getElementById('registerBtn').classList.remove('bg-gray-300', 'text-gray-700');
+            document.getElementById('loginBtn').classList.remove('bg-blue-500', 'text-white');
+            document.getElementById('loginBtn').classList.add('bg-gray-300', 'text-gray-700');
+        }
+        
+        function showMessage(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = isError ? 'mt-4 text-center text-sm text-red-600' : 'mt-4 text-center text-sm text-green-600';
+        }
+        
+        // Authentication Functions
+        async function register() {
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Get ID token
+                const idToken = await user.getIdToken();
+                
+                // Register user in backend
+                const response = await fetch('/register-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    })
+                });
+                
+                if (response.ok) {
+                    showMessage('authMessage', 'Registration successful! Please login.');
+                    showLogin();
+                } else {
+                    showMessage('authMessage', 'Registration failed. Please try again.', true);
+                }
+            } catch (error) {
+                showMessage('authMessage', error.message, true);
+            }
+        }
+        
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                currentUser = userCredential.user;
+                
+                // Show payment screen
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('paymentScreen').classList.remove('hidden');
+                
+                // Load detected info
+                await loadDetectedInfo();
+                
+            } catch (error) {
+                showMessage('authMessage', error.message, true);
+            }
+        }
+        
+        function logout() {
+            auth.signOut();
+            currentUser = null;
+            document.getElementById('paymentScreen').classList.add('hidden');
+            document.getElementById('verificationScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+            
+            // Clear forms
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('registerEmail').value = '';
+            document.getElementById('registerPassword').value = '';
+        }
+        
+        // Payment Functions
+        async function loadDetectedInfo() {
+            if (!currentUser) return;
+            
+            try {
+                // Get user data from backend
+                const response = await fetch(`/user/${currentUser.uid}`);
+                const userData = await response.json();
+                
+                // Display detected info
+                document.getElementById('detectedIP').textContent = userData.last_ip || 'First transaction';
+                document.getElementById('detectedDevice').textContent = userData.last_device ? userData.last_device.substring(0, 50) + '...' : 'First transaction';
+                document.getElementById('detectedTime').textContent = userData.last_txn_time ? new Date(userData.last_txn_time).toLocaleString() : 'First transaction';
+                document.getElementById('txnCount').textContent = userData.txn_count_24h || 0;
+                
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+        
+        async function processPayment() {
+            if (!currentUser) return;
+            
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.uid,
+                        amount: amount
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Display result
+                const resultDiv = document.getElementById('paymentResult');
+                if (result.allowed) {
+                    resultDiv.innerHTML = `
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                            <strong class="font-bold">Payment Successful!</strong><br>
+                            <span class="block sm:inline">Transaction approved: ${result.prediction}</span>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <strong class="font-bold">Payment Blocked!</strong><br>
+                            <span class="block sm:inline">Fraud detected: ${result.prediction}</span><br>
+                            <span class="text-sm">Risk factors: IP change: ${result.risk_factors.is_mal_ip}, Device change: ${result.risk_factors.is_mal_device}, Odd time: ${result.risk_factors.odd_time}</span>
+                        </div>
+                    `;
+                }
+                
+                // Reload detected info
+                await loadDetectedInfo();
+                
+            } catch (error) {
+                document.getElementById('paymentResult').innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <strong class="font-bold">Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function showUserDetails() {
+            if (!currentUser) return;
+            
+            try {
+                const response = await fetch(`/user/${currentUser.uid}`);
+                const userData = await response.json();
+                
+                document.getElementById('paymentScreen').classList.add('hidden');
+                document.getElementById('verificationScreen').classList.remove('hidden');
+                
+                const displayDiv = document.getElementById('userDataDisplay');
+                displayDiv.innerHTML = `
+                    <h3 class="font-semibold mb-3">Stored User Data</h3>
+                    <div class="space-y-2 text-sm">
+                        <div><strong>Email:</strong> ${userData.email}</div>
+                        <div><strong>Last IP:</strong> ${userData.last_ip || 'None'}</div>
+                        <div><strong>Last Device:</strong> ${userData.last_device ? userData.last_device.substring(0, 100) + '...' : 'None'}</div>
+                        <div><strong>Last Transaction:</strong> ${userData.last_txn_time ? new Date(userData.last_txn_time).toLocaleString() : 'None'}</div>
+                        <div><strong>Transaction Count (24h):</strong> ${userData.txn_count_24h}</div>
+                        ${userData.test_mode ? '<div class="mt-3 p-2 bg-yellow-100 rounded text-yellow-800 text-xs"><strong>⚠️ Test Mode Active</strong></div>' : ''}
+                    </div>
+                `;
+            } catch (error) {
+                alert('Error loading user data: ' + error.message);
+            }
+        }
+        
+        async function showVerification() {
+            if (!currentUser) return;
+            
+            try {
+                const response = await fetch(`/user/${currentUser.uid}`);
+                const userData = await response.json();
+                
+                document.getElementById('paymentScreen').classList.add('hidden');
+                document.getElementById('verificationScreen').classList.remove('hidden');
+                
+                const displayDiv = document.getElementById('userDataDisplay');
+                displayDiv.innerHTML = `
+                    <h3 class="font-semibold mb-3">Stored User Data</h3>
+                    <div class="space-y-2 text-sm">
+                        <div><strong>Email:</strong> ${userData.email}</div>
+                        <div><strong>Last IP:</strong> ${userData.last_ip || 'None'}</div>
+                        <div><strong>Last Device:</strong> ${userData.last_device || 'None'}</div>
+                        <div><strong>Last Transaction:</strong> ${userData.last_txn_time || 'None'}</div>
+                        <div><strong>Transaction Count (24h):</strong> ${userData.txn_count_24h}</div>
+                    </div>
+                `;
+            } catch (error) {
+                alert('Error loading user data: ' + error.message);
+            }
+        }
+        
+        function backToPayment() {
+            document.getElementById('verificationScreen').classList.add('hidden');
+            document.getElementById('paymentScreen').classList.remove('hidden');
+        }
+        
+        // Check auth state on load
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('paymentScreen').classList.remove('hidden');
+                loadDetectedInfo();
+            }
+        });
+    </script>
+</body>
+</html>
