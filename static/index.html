@@ -231,58 +231,81 @@ const firebaseConfig = {
         }
         
         async function processPayment() {
-            if (!currentUser) return;
-            
-            const amount = parseFloat(document.getElementById('amount').value);
-            if (!amount || amount <= 0) {
-                alert('Please enter a valid amount');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        user_id: currentUser.uid,
-                        amount: amount
-                    })
-                });
-                
-                const result = await response.json();
-                
-                // Display result
-                const resultDiv = document.getElementById('paymentResult');
-                if (result.allowed) {
-                    resultDiv.innerHTML = `
-                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                            <strong class="font-bold">Payment Successful!</strong><br>
-                            <span class="block sm:inline">Transaction approved: ${result.prediction}</span>
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `
-                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                            <strong class="font-bold">Payment Blocked!</strong><br>
-                            <span class="block sm:inline">Fraud detected: ${result.prediction}</span><br>
-                            <span class="text-sm">Risk factors: IP change: ${result.risk_factors.is_mal_ip}, Device change: ${result.risk_factors.is_mal_device}, Odd time: ${result.risk_factors.odd_time}</span>
-                        </div>
-                    `;
-                }
-                
-                // Reload detected info
-                await loadDetectedInfo();
-                
-            } catch (error) {
-                document.getElementById('paymentResult').innerHTML = `
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                        <strong class="font-bold">Error:</strong> ${error.message}
-                    </div>
-                `;
-            }
+    if (!currentUser) return;
+
+    const amount = parseFloat(document.getElementById('amount').value);
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid amount');
+        return;
+    }
+
+    // REAL device fingerprint (privacy-safe)
+    const deviceFingerprint = btoa(JSON.stringify({
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        cpuCores: navigator.hardwareConcurrency || 0,
+        touchPoints: navigator.maxTouchPoints || 0
+    }));
+
+    try {
+        const response = await fetch('/payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: currentUser.uid,
+                amount: amount,
+                device_fingerprint: deviceFingerprint
+            })
+        });
+
+        const result = await response.json();
+
+        // Display result
+        const resultDiv = document.getElementById('paymentResult');
+
+        if (result.allowed) {
+            resultDiv.innerHTML = `
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    <strong class="font-bold">Payment Successful!</strong><br>
+                    <span class="block sm:inline">
+                        Transaction approved: ${result.prediction}
+                    </span>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <strong class="font-bold">Payment Blocked!</strong><br>
+                    <span class="block sm:inline">
+                        Fraud detected: ${result.prediction}
+                    </span><br>
+                    <span class="text-sm">
+                        Risk factors →
+                        IP change: ${result.risk_factors.is_mal_ip},
+                        Device change: ${result.risk_factors.is_mal_device},
+                        Odd time: ${result.risk_factors.odd_time}
+                    </span>
+                </div>
+            `;
         }
+
+        // Reload detected info
+        await loadDetectedInfo();
+
+    } catch (error) {
+        document.getElementById('paymentResult').innerHTML = `
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <strong class="font-bold">Error:</strong> ${error.message}
+            </div>
+        `;
+    }
+}
+
         
         async function showUserDetails() {
             if (!currentUser) return;
@@ -300,7 +323,10 @@ const firebaseConfig = {
                     <div class="space-y-2 text-sm">
                         <div><strong>Email:</strong> ${userData.email}</div>
                         <div><strong>Last IP:</strong> ${userData.last_ip || 'None'}</div>
-                        <div><strong>Last Device:</strong> ${userData.last_device ? userData.last_device.substring(0, 100) + '...' : 'None'}</div>
+                        <div>
+    <strong>Last Device:</strong>
+    ${userData.last_device ? decodeDeviceFingerprint(userData.last_device) : 'None'}
+</div>
                         <div><strong>Last Transaction:</strong> ${userData.last_txn_time ? new Date(userData.last_txn_time).toLocaleString() : 'None'}</div>
                         <div><strong>Transaction Count (24h):</strong> ${userData.txn_count_24h}</div>
                         ${userData.test_mode ? '<div class="mt-3 p-2 bg-yellow-100 rounded text-yellow-800 text-xs"><strong>⚠️ Test Mode Active</strong></div>' : ''}
@@ -352,5 +378,50 @@ const firebaseConfig = {
             }
         });
     </script>
+    <script>
+function getDeviceFingerprint() {
+    const fpData = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        cpuCores: navigator.hardwareConcurrency || 0,
+        touchSupport: navigator.maxTouchPoints || 0
+    };
+
+    return btoa(JSON.stringify(fpData)); // base64 encoded fingerprint
+}
+function decodeDeviceFingerprint(fp) {
+    try {
+        const decoded = JSON.parse(atob(fp));
+
+        const ua = decoded.userAgent || "";
+        const platform = decoded.platform || "Unknown";
+
+        let browser = "Unknown Browser";
+
+        // IMPORTANT: order matters
+        if (ua.includes("Edg")) browser = "Microsoft Edge";
+        else if (ua.includes("Firefox")) browser = "Firefox";
+        else if (ua.includes("Chrome")) browser = "Chrome";
+        else if (ua.includes("Safari")) browser = "Safari";
+
+        let os = "Unknown OS";
+        if (ua.includes("Windows NT")) os = "Windows";
+        else if (ua.includes("Mac OS X")) os = "MacOS";
+        else if (ua.includes("Android")) os = "Android";
+        else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+        else if (ua.includes("Linux")) os = "Linux";
+
+        return `${browser} on ${os} (${platform})`;
+    } catch (e) {
+        return "Unknown Device";
+    }
+}
+
+
+</script>
+
 </body>
 </html>

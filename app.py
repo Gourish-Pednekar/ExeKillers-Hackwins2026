@@ -48,6 +48,7 @@ except Exception as e:
 class PaymentRequest(BaseModel):
     user_id: str
     amount: float
+    device_fingerprint: str
 
 class User(BaseModel):
     email: str
@@ -88,7 +89,7 @@ async def process_payment(payment: PaymentRequest, request: Request):
         
         # Get real data from request
         current_ip = request.client.host
-        current_device = request.headers.get("User-Agent", "Unknown")
+        current_device = payment.device_fingerprint
         current_time = datetime.now()
         
         # Simulate user data for testing
@@ -136,7 +137,7 @@ async def process_payment(payment: PaymentRequest, request: Request):
     
     # Get real data from request
     current_ip = request.client.host
-    current_device = request.headers.get("User-Agent", "Unknown")
+    current_device = payment.device_fingerprint
     current_time = datetime.now()
     
     # Get user data from Firestore
