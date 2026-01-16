@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -13,7 +13,15 @@ import firebase_config
 import os
 
 app = FastAPI()
-model = joblib.load("fraud_model.pkl")
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "fraud_model.pkl")
+
+try:
+    model = joblib.load(MODEL_PATH)
+    print("✅ Fraud model loaded successfully")
+except Exception as e:
+    print(f"❌ Model loading failed: {e}")
+    model = None
+
 
 # CORS middleware
 app.add_middleware(
@@ -60,6 +68,8 @@ class User(BaseModel):
 @app.post("/predict")
 def predict(txn: dict):
     df = pd.DataFrame([txn])
+    if model is None:
+        raise HTTPException(status_code=500, detail="Model not loaded")
     pred = model.predict(df)[0]
     return {"prediction": "Fraud" if pred == 1 else "Normal"}
 
@@ -133,6 +143,8 @@ async def process_payment(payment: PaymentRequest, request: Request):
         
         # Get ML prediction
         df = pd.DataFrame([ml_input])
+        if model is None:
+            raise HTTPException(status_code=500, detail="Model not loaded")
         pred = model.predict(df)[0]
         prediction = "Fraud" if pred == 1 else "Normal"
         
@@ -292,8 +304,11 @@ async def register_user(request: Request):
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 # Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 async def read_index():
-    return FileResponse("static/index.html")
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
