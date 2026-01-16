@@ -92,10 +92,34 @@ async def process_payment(payment: PaymentRequest, request: Request):
         current_device = payment.device_fingerprint
         current_time = datetime.now()
         
-        # Simulate user data for testing
-        is_mal_ip = 0  # Assume normal IP for test
-        is_mal_device = 0  # Assume normal device for test
-        odd_time = 1 if current_time.hour < 5 else 0
+        # Simulated user data for TEST MODE
+        user_data = {
+            "last_ip": None,
+            "last_device": None,
+            "ip_change_count": 0,
+            "device_change_count": 0
+        }
+
+        # Detect changes
+        ip_changed = current_ip != user_data["last_ip"]
+        device_changed = current_device != user_data["last_device"]
+        odd_time = current_time.hour < 5
+
+
+        # Update counters
+        ip_change_count = user_data.get("ip_change_count", 0)
+        device_change_count = user_data.get("device_change_count", 0)
+
+        if ip_changed and user_data.get("last_ip") is not None:
+            ip_change_count += 1
+
+        if device_changed and user_data.get("last_device") is not None:
+            device_change_count += 1
+
+        # ML binary flags (KEEP THESE)
+        is_mal_ip = 1 if ip_changed else 0
+        is_mal_device = 1 if device_changed else 0
+
         txn_count_24h = 1  # First transaction
         
         # Prepare ML input
@@ -113,22 +137,21 @@ async def process_payment(payment: PaymentRequest, request: Request):
         prediction = "Fraud" if pred == 1 else "Normal"
         
         return {
-            "prediction": prediction,
-            "risk_factors": {
-                "is_mal_ip": is_mal_ip,
-                "is_mal_device": is_mal_device,
-                "odd_time": odd_time,
-                "txn_count_24h": txn_count_24h
-            },
-            "detected_data": {
-                "ip": current_ip,
-                "device": current_device,
-                "time": current_time.isoformat()
-            },
-            "allowed": prediction == "Normal",
-            "test_mode": True,
-            "message": "Firebase not configured - running in test mode"
-        }
+        "prediction": prediction,
+        "risk_factors": {
+            "ip_change_count": 0,
+            "device_change_count": 0,
+            "odd_time": odd_time
+        },
+        "detected_data": {
+            "ip": current_ip,
+            "device": current_device,
+            "time": current_time.isoformat()
+        },
+        "allowed": prediction == "Normal",
+        "test_mode": True
+}
+
     
     print("DEBUG: Using Firebase code path")
     # Original Firebase code (when configured)
@@ -148,7 +171,15 @@ async def process_payment(payment: PaymentRequest, request: Request):
         raise HTTPException(status_code=404, detail="User not found")
     
     user_data = user_doc.to_dict()
-    
+    ip_change_count = user_data.get("ip_change_count", 0)
+    device_change_count = user_data.get("device_change_count", 0)
+
+    if current_ip != user_data.get("last_ip") and user_data.get("last_ip") is not None:
+        ip_change_count += 1
+
+    if current_device != user_data.get("last_device") and user_data.get("last_device") is not None:
+        device_change_count += 1
+
     # Calculate risk flags
     is_mal_ip = 1 if current_ip != user_data.get("last_ip") else 0
     is_mal_device = 1 if current_device != user_data.get("last_device") else 0
@@ -184,17 +215,20 @@ async def process_payment(payment: PaymentRequest, request: Request):
         "last_ip": current_ip,
         "last_device": current_device,
         "last_txn_time": current_time.isoformat(),
-        "txn_count_24h": txn_count_24h
+        "txn_count_24h": txn_count_24h,
+        "ip_change_count": ip_change_count,
+        "device_change_count": device_change_count
     })
     
     return {
         "prediction": prediction,
         "risk_factors": {
-            "is_mal_ip": is_mal_ip,
-            "is_mal_device": is_mal_device,
-            "odd_time": odd_time,
-            "txn_count_24h": txn_count_24h
-        },
+            "ip_change_count": ip_change_count,
+            "device_change_count": device_change_count,
+            "odd_time": odd_time
+        }
+
+,
         "detected_data": {
             "ip": current_ip,
             "device": current_device,
@@ -247,9 +281,10 @@ async def register_user(request: Request):
             "last_ip": None,
             "last_device": None,
             "last_txn_time": None,
-            "txn_count_24h": 0
-        }
-        
+            "txn_count_24h": 0,
+            "ip_change_count": 0,
+            "device_change_count": 0
+        }  
         user_ref.set(user_data)
         return {"success": True, "message": "User registered successfully"}
     

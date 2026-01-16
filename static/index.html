@@ -285,11 +285,12 @@ const firebaseConfig = {
                         Fraud detected: ${result.prediction}
                     </span><br>
                     <span class="text-sm">
-                        Risk factors →
-                        IP change: ${result.risk_factors.is_mal_ip},
-                        Device change: ${result.risk_factors.is_mal_device},
-                        Odd time: ${result.risk_factors.odd_time}
-                    </span>
+    Risk factors →
+    IP changes: ${result.risk_factors.ip_change_count},
+    Device changes: ${result.risk_factors.device_change_count}
+    ${result.risk_factors.odd_time ? ', Odd time transaction' : ''}
+</span>
+
                 </div>
             `;
         }
@@ -308,34 +309,62 @@ const firebaseConfig = {
 
         
         async function showUserDetails() {
-            if (!currentUser) return;
-            
-            try {
-                const response = await fetch(`/user/${currentUser.uid}`);
-                const userData = await response.json();
-                
-                document.getElementById('paymentScreen').classList.add('hidden');
-                document.getElementById('verificationScreen').classList.remove('hidden');
-                
-                const displayDiv = document.getElementById('userDataDisplay');
-                displayDiv.innerHTML = `
-                    <h3 class="font-semibold mb-3">Stored User Data</h3>
-                    <div class="space-y-2 text-sm">
-                        <div><strong>Email:</strong> ${userData.email}</div>
-                        <div><strong>Last IP:</strong> ${userData.last_ip || 'None'}</div>
-                        <div>
-    <strong>Last Device:</strong>
-    ${userData.last_device ? decodeDeviceFingerprint(userData.last_device) : 'None'}
-</div>
-                        <div><strong>Last Transaction:</strong> ${userData.last_txn_time ? new Date(userData.last_txn_time).toLocaleString() : 'None'}</div>
-                        <div><strong>Transaction Count (24h):</strong> ${userData.txn_count_24h}</div>
-                        ${userData.test_mode ? '<div class="mt-3 p-2 bg-yellow-100 rounded text-yellow-800 text-xs"><strong>⚠️ Test Mode Active</strong></div>' : ''}
-                    </div>
-                `;
-            } catch (error) {
-                alert('Error loading user data: ' + error.message);
+    if (!currentUser) return;
+
+    try {
+        const response = await fetch(`/user/${currentUser.uid}`);
+        const userData = await response.json();
+
+        document.getElementById('paymentScreen').classList.add('hidden');
+        document.getElementById('verificationScreen').classList.remove('hidden');
+
+        const displayDiv = document.getElementById('userDataDisplay');
+
+        displayDiv.innerHTML = `
+            <h3 class="font-semibold mb-4">Stored User Data</h3>
+
+            <div class="grid grid-cols-[180px_1fr] gap-y-2 text-sm">
+                <div class="font-semibold text-gray-700">Email:</div>
+                <div class="text-gray-900">${userData.email}</div>
+
+                <div class="font-semibold text-gray-700">Last IP:</div>
+                <div class="text-gray-900">${userData.last_ip || 'None'}</div>
+
+                <div class="font-semibold text-gray-700">Last Device:</div>
+                <div class="text-gray-900">
+                    ${userData.last_device ? decodeDeviceFingerprint(userData.last_device) : 'None'}
+                </div>
+
+                <div class="font-semibold text-gray-700">Last Transaction:</div>
+                <div class="text-gray-900">
+                    ${userData.last_txn_time
+                        ? new Date(userData.last_txn_time).toLocaleString()
+                        : 'None'}
+                </div>
+
+                <div class="font-semibold text-gray-700">Transaction Count (24h):</div>
+                <div class="text-gray-900">${userData.txn_count_24h}</div>
+
+                <div class="font-semibold text-gray-700">IP Change Count:</div>
+                <div class="text-gray-900">${userData.ip_change_count || 0}</div>
+
+                <div class="font-semibold text-gray-700">Device Change Count:</div>
+                <div class="text-gray-900">${userData.device_change_count || 0}</div>
+            </div>
+
+            ${
+                userData.test_mode
+                    ? `<div class="mt-4 p-2 bg-yellow-100 rounded text-yellow-800 text-xs font-semibold">
+                        ⚠️ Test Mode Active
+                       </div>`
+                    : ''
             }
-        }
+        `;
+    } catch (error) {
+        alert('Error loading user data: ' + error.message);
+    }
+}
+
         
         async function showVerification() {
             if (!currentUser) return;
