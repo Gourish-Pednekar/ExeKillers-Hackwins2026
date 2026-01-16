@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>How Our Fraud Detection Works</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #0b0b0b;
+      color: #ffffff;
+      line-height: 1.6;
+    }
+
+    header {
+      padding: 30px 60px;
+      border-bottom: 1px solid #222;
+    }
+
+    header a {
+      color: #ff5c5c;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    section {
+      max-width: 1100px;
+      margin: auto;
+      padding: 80px 60px;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 300;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #ff5c5c;
+    }
+
+    p {
+      color: #cccccc;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 25px;
+      margin-top: 40px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      padding: 25px;
+      border-radius: 6px;
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+      color: #ffffff;
+    }
+
+    .highlight {
+      background: #111;
+      border-left: 4px solid #ff5c5c;
+      padding: 20px;
+      margin: 40px 0;
+    }
+
+    .cta {
+      text-align: center;
+      margin-top: 80px;
+    }
+
+    .cta a {
+      background: #ff5c5c;
+      color: #000;
+      padding: 16px 34px;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    @media (max-width: 768px) {
+      section {
+        padding: 60px 20px;
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <a href="landing.html">← Back to Home</a>
+</header>
+
+<section>
+  <h1>How Our Fraud Detection System Works</h1>
+
+  <p>
+    Our system is designed to detect **real payment fraud in real time** using
+    **actual user behavior**, not fake inputs or manual selections.
+    The goal is to simulate how modern payment platforms like UPI, Stripe,
+    or card networks protect transactions.
+  </p>
+
+  <h2>Core Idea</h2>
+  <p>
+    Fraud rarely happens in isolation. It leaves signals — device changes,
+    IP changes, unusual timing, and rapid transaction patterns.
+    Our platform captures these signals automatically and feeds them
+    into a trained Machine Learning model.
+  </p>
+
+  <div class="highlight">
+    <strong>No manual selection.</strong><br>
+    IP address, device information, session timing, and transaction frequency
+    are captured automatically at payment time.
+  </div>
+
+  <h2>End-to-End Flow</h2>
+
+  <div class="flow">
+    <div class="card">
+      <h3>1. User Authentication</h3>
+      <p>
+        Users register and log in using Firebase Authentication.
+        Each user has a unique identity that persists across sessions.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>2. Real-Time Data Capture</h3>
+      <p>
+        When a payment is attempted, the backend automatically captures:
+        IP address, device fingerprint (User-Agent), timestamp,
+        and session activity.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>3. Risk Signal Generation</h3>
+      <p>
+        The backend compares current session data with historical user data
+        stored in the database to detect changes or anomalies.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>4. Machine Learning Decision</h3>
+      <p>
+        A trained Random Forest model evaluates the risk signals
+        and classifies the transaction as <strong>Normal</strong> or <strong>Fraud</strong>.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>5. Action</h3>
+      <p>
+        Normal transactions are allowed instantly.
+        Fraudulent transactions are blocked and explained to the user.
+      </p>
+    </div>
+  </div>
+
+  <h2>What Makes This Realistic</h2>
+
+  <p>
+    Unlike demo projects that let users choose “Suspicious IP” or “Bad Device”,
+    our system works the way real payment systems do:
+  </p>
+
+  <ul style="color:#ccc; margin-left:20px; margin-bottom:40px;">
+    <li>IP changes detected automatically</li>
+    <li>Device changes detected across sessions</li>
+    <li>Transaction frequency tracked per user</li>
+    <li>Time-based anomaly detection (late night transactions)</li>
+    <li>ML model isolated from raw identifiers</li>
+  </ul>
+
+  <h2>Why This Architecture Matters</h2>
+  <p>
+    Raw identifiers like IPs and device strings are unstable and high-cardinality.
+    Our design converts them into stable, explainable risk features before
+    passing them to the ML model — exactly how production fraud pipelines work.
+  </p>
+
+  <div class="highlight">
+    Backend rules extract risk → ML decides → system acts.
+    <br>This separation keeps the model explainable and scalable.
+  </div>
+
+  <h2>Who This Is For</h2>
+  <p>
+    This project is designed for real-world fintech scenarios:
+    UPI apps, payment gateways, e-commerce checkout systems,
+    and internal fraud monitoring dashboards.
+  </p>
+
+  
+
+</section>
+
+</body>
+</html>

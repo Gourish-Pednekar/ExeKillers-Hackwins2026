@@ -4,62 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fraud Detection Payment System</title>
+
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="stylesheet" href="/static/styles.css">
+
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
-    <div id="app" class="container mx-auto px-4 py-8">
-        <!-- Login/Register Screen -->
+
+    <!-- BACKGROUND VIDEO (DESIGN ONLY) -->
+    <video class="bg-video" autoplay muted loop playsinline>
+        <source src="/static/assest/hero-bg.mp4" type="video/mp4">
+    </video>
+    <div class="video-overlay"></div>
+
+    <div id="app" class="px-4">
+
+        <!-- LOGIN / REGISTER -->
         <div id="authScreen" class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-            <h1 class="text-2xl font-bold text-center mb-6">Fraud Detection System</h1>
-            
-            <!-- Toggle Buttons -->
+            <h1 class="text-2xl font-bold text-center mb-6">Powered by FinShield</h1>
+
             <div class="flex mb-6">
-                <button onclick="showLogin()" id="loginBtn" class="flex-1 py-2 px-4 bg-blue-500 text-white rounded-l-lg">Login</button>
-                <button onclick="showRegister()" id="registerBtn" class="flex-1 py-2 px-4 bg-gray-300 text-gray-700 rounded-r-lg">Register</button>
+                <button onclick="showLogin()" id="loginBtn"
+                    class="flex-1 py-2 px-4 bg-blue-500 text-white rounded-l-lg">Login</button>
+                <button onclick="showRegister()" id="registerBtn"
+                    class="flex-1 py-2 px-4 bg-gray-300 text-gray-700 rounded-r-lg">Register</button>
             </div>
-            
-            <!-- Login Form -->
+
             <div id="loginForm">
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="loginEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your email">
+                    <input type="email" id="loginEmail"
+                        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                        placeholder="Enter your email">
                 </div>
+
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                    <input type="password" id="loginPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your password">
+                    <input type="password" id="loginPassword"
+                        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                        placeholder="Enter your password">
                 </div>
-                <button onclick="login()" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Login</button>
+
+                <button onclick="login()"
+                    class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                    Login
+                </button>
             </div>
-            
-            <!-- Register Form -->
+
             <div id="registerForm" class="hidden">
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                    <input type="email" id="registerEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your email">
+                    <input type="email" id="registerEmail"
+                        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                        placeholder="Enter your email">
                 </div>
+
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-                    <input type="password" id="registerPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter your password">
+                    <input type="password" id="registerPassword"
+                        class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                        placeholder="Enter your password">
                 </div>
-                <button onclick="register()" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Register</button>
+
+                <button onclick="register()"
+                    class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                    Register
+                </button>
             </div>
-            
+
             <div id="authMessage" class="mt-4 text-center text-sm"></div>
         </div>
-        
-        <!-- Payment Screen -->
+
+        <!-- PAYMENT -->
         <div id="paymentScreen" class="hidden max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-            <h1 class="text-2xl font-bold text-center mb-6">Make Payment</h1>
-            
+            <h1 class="text-2xl font-bold text-center mb-6">FinShield Detector</h1>
+
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Amount ($)</label>
-                <input type="number" id="amount" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="Enter amount" value="100">
+                <input type="number" id="amount"
+                    class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                    value="100">
             </div>
-            
-            <!-- Detected Information (Read-only) -->
+
             <div class="bg-gray-50 rounded-lg p-4 mb-6">
                 <h3 class="font-semibold mb-3">Detected Information</h3>
                 <div class="space-y-2 text-sm">
@@ -69,25 +98,36 @@
                     <div><strong>Transaction Count (24h):</strong> <span id="txnCount">-</span></div>
                 </div>
             </div>
-            
-            <button onclick="processPayment()" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">Process Payment</button>
-            
-            <button onclick="showUserDetails()" class="w-full mt-3 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">View User Details</button>
-            
-            <button onclick="logout()" class="w-full mt-3 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600">Logout</button>
-            
+
+            <button onclick="processPayment()"
+                class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                Analyse Payment
+            </button>
+
+            <button onclick="showUserDetails()"
+                class="w-full mt-3 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                View User Details
+            </button>
+
+            <button onclick="logout()"
+                class="w-full mt-3 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600">
+                Logout
+            </button>
+
             <div id="paymentResult" class="mt-4"></div>
         </div>
-        
-        <!-- User Data Verification Screen -->
-        <div id="verificationScreen" class="hidden max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-            <h1 class="text-2xl font-bold text-center mb-6">User Data Verification</h1>
-            <div id="userDataDisplay" class="bg-gray-50 rounded-lg p-4"></div>
-            <button onclick="backToPayment()" class="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Back to Payment</button>
-        </div>
-    </div>
 
-    <script>
+        <!-- VERIFICATION -->
+        <div id="verificationScreen" class="hidden max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+            <div id="userDataDisplay" class="bg-gray-50 rounded-lg p-4"></div>
+            <button onclick="backToPayment()"
+                class="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                Back to Payment
+            </button>
+        </div>
+
+    </div>
+<script>
         // // Firebase configuration - REPLACE WITH YOUR CONFIG
         // const firebaseConfig = {
         //     apiKey: "your-api-key",
@@ -271,18 +311,18 @@ const firebaseConfig = {
         if (result.allowed) {
             resultDiv.innerHTML = `
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    <strong class="font-bold">Payment Successful!</strong><br>
+                    <strong class="font-bold">Secure User and Transaction Confirmed!</strong><br>
                     <span class="block sm:inline">
-                        Transaction approved: ${result.prediction}
+                        Transaction approval status: ${result.prediction}
                     </span>
                 </div>
             `;
         } else {
             resultDiv.innerHTML = `
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    <strong class="font-bold">Payment Blocked!</strong><br>
+                    <strong class="font-bold">Transaction Blocked!</strong><br>
                     <span class="block sm:inline">
-                        Fraud detected: ${result.prediction}
+                        Potential Fraud status: ${result.prediction}
                     </span><br>
                     <span class="text-sm">
     Risk factors →
@@ -451,6 +491,5 @@ function decodeDeviceFingerprint(fp) {
 
 
 </script>
-
 </body>
 </html>

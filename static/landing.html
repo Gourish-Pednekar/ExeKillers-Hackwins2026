@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fraud Detection Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    /* RESET */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 25px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 2px;
+    }
+
+    .nav-links a {
+      margin-left: 25px;
+      text-decoration: none;
+      color: #ccc;
+      font-size: 14px;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+    }
+
+    .nav-links .login {
+      color: #ff6b6b;
+    }
+
+    .nav-links .cta {
+      border: 1px solid #fff;
+      padding: 8px 14px;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .hero video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    .overlay {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      max-width: 900px;
+      padding-left: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .hero-content h1 {
+      font-size: 68px;
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 30px;
+    }
+
+    .hero-content p {
+      font-size: 18px;
+      color: #ccc;
+      max-width: 700px;
+      margin-bottom: 45px;
+    }
+
+    .hero-content .btn {
+      display: inline-block;
+      padding: 14px 30px;
+      background: #e35b5b;
+      color: #000;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 20px;
+      }
+
+      .hero-content {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .hero-content h1 {
+        font-size: 42px;
+      }
+
+      .hero-content p {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="logo">FinShield</div>
+    <div class="nav-links">
+      <a href="/static/index.html" class="cta">Login / Register</a>
+    </div>
+  </div>
+
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <!-- CHANGE VIDEO PATH IF NEEDED -->
+    <video autoplay muted loop playsinline>
+      <source src="/static/hero-bg.mp4" type="video/mp4">
+    </video>
+
+    <div class="overlay"></div>
+
+    <div class="hero-content">
+      <h1>The New Standard<br>in Fraud Detection</h1>
+      <p>
+        Use real-time device fingerprinting, IP intelligence, session tracking
+        and machine learning to protect digital payments instantly.
+      </p>
+      <a href="/static/learn-more.html" class="btn">Learn More</a>
+    </div>
+  </section>
+
+</body>
+</html>
